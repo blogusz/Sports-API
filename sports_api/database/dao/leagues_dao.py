@@ -1,45 +1,29 @@
-from typing import List, Dict, Any
-from sports_api.database.db_manager import DatabaseManager
+from typing import List, Dict, Any, Optional, Tuple
+from sports_api.database.dao.base_dao import BaseDAO
 
 
-class LeaguesDAO:
-    """
-    Data Access Object for leagues table.
-    """
+class LeaguesDAO(BaseDAO):
+    """Data Access Object for leagues table."""
 
-    def __init__(self, db_manager: DatabaseManager):
-        self.db_manager = db_manager
+    def get_item_id(self, item: Dict[str, Any]) -> Optional[str]:
+        return item.get('idLeague')
+
+    def get_check_query(self) -> str:
+        return "SELECT id FROM leagues WHERE id = %s"
+
+    def get_insert_query(self) -> str:
+        return "INSERT INTO leagues (id, name, sport, alternate_name) VALUES (%s, %s, %s, %s)"
+
+    def extract_insert_values(self, item: Dict[str, Any]) -> Tuple:
+        league_id = item.get('idLeague')
+        league_name = item.get('strLeague')
+        sport = item.get('strSport')
+        alternate_names = item.get('strLeagueAlternate')
+        return (league_id, league_name, sport, alternate_names)
+
+    def get_item_name(self, item: Dict[str, Any]) -> str:
+        return f"League {item.get('strLeague')}"
 
     def save_leagues(self, leagues: List[Dict[str, Any]]) -> int:
-        """
-        Save leagues to database.
-        """
-        conn = self.db_manager.get_connection()
-        count = 0
-
-        with conn.cursor() as cur:
-            for league in leagues:
-                league_name = league.get('strLeague')
-                if not league_name:
-                    continue
-
-                try:
-                    # Check if exists
-                    cur.execute("SELECT id FROM leagues WHERE name = %s", (league_name,))
-                    existing = cur.fetchone()
-
-                    if not existing:
-                        league_id = league.get('idLeague')
-                        sport = league.get('strSport')
-                        alternate_names = league.get('strLeagueAlternate')
-
-                        cur.execute(
-                            "INSERT INTO leagues (id, name, sport, alternate_names) VALUES (%s, %s, %s, %s)",
-                            (league_id, league_name, sport, alternate_names)
-                        )
-                    count += 1
-                except Exception as e:
-                    print(f"Error saving league {league_name}: {e}")
-
-            conn.commit()
-        return count
+        """Save leagues to database."""
+        return self.save_items(leagues)
