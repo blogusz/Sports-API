@@ -37,3 +37,9 @@ class MatchesDAO(BaseDAO):
     def save_matches(self, matches: List[Dict[str, Any]]) -> int:
         """Save matches to database."""
         return self.save_items(matches)
+
+    def get_update_query(self) -> str:
+        raise NotImplementedError("Matches do not support updates")
+
+    def extract_update_values(self, item: Dict[str, Any]) -> Tuple:
+        raise NotImplementedError("Matches do not support updates")

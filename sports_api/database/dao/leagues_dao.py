@@ -24,6 +24,19 @@ class LeaguesDAO(BaseDAO):
     def get_item_name(self, item: Dict[str, Any]) -> str:
         return f"League {item.get('strLeague')}"
 
+    def get_update_query(self) -> str:
+        return """
+            UPDATE leagues SET name = %s, sport = %s, alternate_name = %s WHERE id = %s
+        """
+
+    def extract_update_values(self, item: Dict[str, Any]) -> Tuple:
+        return (
+            item.get('strLeague'),
+            item.get('strSport'),
+            item.get('strLeagueAlternate'),
+            item.get('idLeague')  # WHERE clause - ID goes last
+        )
+
     def save_leagues(self, leagues: List[Dict[str, Any]]) -> int:
         """Save leagues to database."""
         return self.save_items(leagues)

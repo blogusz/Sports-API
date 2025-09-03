@@ -32,6 +32,25 @@ class VenuesDAO(BaseDAO):
     def get_item_name(self, item: Dict[str, Any]) -> str:
         return f"Venue {item.get('strVenue')}"
 
+    def get_update_query(self) -> str:
+        return """
+            UPDATE venues SET name = %s, alternate_names = %s, sport = %s, 
+                   capacity = %s, country_name = %s, location = %s, 
+                   foundation_year = %s WHERE id = %s
+        """
+
+    def extract_update_values(self, item: Dict[str, Any]) -> Tuple:
+        return (
+            item.get('strVenue'),
+            item.get('strVenueAlternate'),
+            item.get('strSport'),
+            item.get('intCapacity'),
+            item.get('strCountry'),
+            item.get('strLocation'),
+            item.get('intFormedYear'),
+            item.get('idVenue')  # WHERE clause - ID goes last
+        )
+
     def save_venues(self, venues: List[Dict[str, Any]]) -> int:
         """Save venues to database."""
         return self.save_items(venues)

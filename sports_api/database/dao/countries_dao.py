@@ -23,6 +23,12 @@ class CountriesDAO(BaseDAO):
     def get_item_name(self, item: Dict[str, Any]) -> str:
         return f"Country {item.get('name_en')}"
 
+    def get_update_query(self) -> str:
+        raise NotImplementedError("Countries do not support updates")
+
+    def extract_update_values(self, item: Dict[str, Any]) -> Tuple:
+        raise NotImplementedError("Countries do not support updates")
+
     def save_countries(self, countries: List[Dict[str, Any]]) -> int:
         """Save countries to database."""
         return self.save_items(countries)
