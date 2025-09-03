@@ -1,53 +1,38 @@
-from typing import List, Dict, Any
-from sports_api.database.db_manager import DatabaseManager
+from typing import List, Dict, Any, Optional, Tuple
+from sports_api.database.dao.base_dao import BaseDAO
 
 
-class PlayersDAO:
+class PlayersDAO(BaseDAO):
     """Data Access Object for players table."""
 
-    def __init__(self, db_manager: DatabaseManager):
-        self.db_manager = db_manager
+    def get_item_id(self, item: Dict[str, Any]) -> Optional[str]:
+        return item.get('idPlayer')
+
+    def get_check_query(self) -> str:
+        return "SELECT id FROM players WHERE id = %s"
+
+    def get_insert_query(self) -> str:
+        return """
+            INSERT INTO players (id, name, team_id, nationality, date_born, position, height, weight, jersey_number)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
+
+    def extract_insert_values(self, item: Dict[str, Any]) -> Tuple:
+        return (
+            item.get('idPlayer'),
+            item.get('strPlayer'),
+            item.get('idTeam'),
+            item.get('strNationality'),
+            item.get('dateBorn'),
+            item.get('strPosition'),
+            item.get('strHeight'),
+            item.get('strWeight'),
+            item.get('strNumber')
+        )
+
+    def get_item_name(self, item: Dict[str, Any]) -> str:
+        return f"Player {item.get('strPlayer')}"
 
     def save_players(self, players: List[Dict[str, Any]]) -> int:
         """Save players to database."""
-        conn = self.db_manager.get_connection()
-        count = 0
-
-        with conn.cursor() as cur:
-            for player in players:
-                player_id = player.get('idPlayer')
-                if not player_id:
-                    continue
-
-                try:
-                    # Check if exists
-                    cur.execute("SELECT id FROM players WHERE id = %s", (player_id,))
-                    existing = cur.fetchone()
-
-                    if not existing:
-                        player_name = player.get('strPlayer')
-                        team_id = player.get('idTeam')
-                        nationality = player.get('strNationality')
-                        date_born = player.get('dateBorn')
-                        position = player.get('strPosition')
-                        height = player.get('strHeight')
-                        weight = player.get('strWeight')
-                        jersey_number = player.get('strNumber')
-
-                        cur.execute(
-                            """
-                            INSERT INTO players (id, name, team_id, nationality, date_born, position, height, weight, jersey_number)
-                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                            """,
-                            (player_id, player_name, team_id, nationality, date_born, position, height, weight,
-                             jersey_number)
-                        )
-                    else:
-                        print(f'Player {player.get("strPlayer")} already exists with id {player_id}.')
-
-                    count += 1
-                except Exception as e:
-                    print(f"Error saving player {player.get('strPlayer')}: {e}")
-
-            conn.commit()
-        return count
+        return self.save_items(players)
