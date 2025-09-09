@@ -34,6 +34,27 @@ class TeamsDAO(BaseDAO):
     def get_item_name(self, item: Dict[str, Any]) -> str:
         return f"Team {item.get('strTeam')}"
 
+    def get_update_query(self) -> str:
+        return """
+            UPDATE teams SET name = %s, alternate_names = %s, short_name = %s, 
+                   foundation_year = %s, sport = %s, league_id = %s, venue_id = %s, 
+                   location = %s, country_name = %s WHERE id = %s
+        """
+
+    def extract_update_values(self, item: Dict[str, Any]) -> Tuple:
+        return (
+            item.get('strTeam'),
+            item.get('strTeamAlternate'),
+            item.get('strTeamShort'),
+            item.get('intFormedYear'),
+            item.get('strSport'),
+            item.get('idLeague'),
+            item.get('idVenue'),
+            item.get('strLocation'),
+            item.get('strCountry'),
+            item.get('idTeam')  # WHERE clause - ID goes last
+        )
+
     def save_teams(self, teams: List[Dict[str, Any]]) -> int:
         """Save teams to database."""
         return self.save_items(teams)

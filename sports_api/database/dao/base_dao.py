@@ -34,31 +34,49 @@ class BaseDAO(ABC):
         """Get item name for logging purposes."""
         pass
 
+    @abstractmethod
+    def get_update_query(self) -> str:
+        """Return SQL query to update existing item."""
+        pass
+
+    @abstractmethod
+    def extract_update_values(self, item: Dict[str, Any]) -> Tuple:
+        """Extract values for update query from item."""
+        pass
+
     def save_items(self, items: List[Dict[str, Any]]) -> int:
-        """Generic save method for all DAOs."""
+        """Generic save method with upsert capability."""
         conn = self.db_manager.get_connection()
         count = 0
 
         with conn.cursor() as cur:
+            items_to_insert = []
+            items_to_update = []
+
             for item in items:
                 item_id = self.get_item_id(item)
                 if not item_id:
                     continue
 
                 try:
-                    # Check if exists
                     cur.execute(self.get_check_query(), (item_id,))
                     existing = cur.fetchone()
 
                     if not existing:
-                        values = self.extract_insert_values(item)
-                        cur.execute(self.get_insert_query(), values)
+                        items_to_insert.append(self.extract_insert_values(item))
                     else:
-                        print(f'{self.get_item_name(item)} already exists with id {item_id}.')
+                        items_to_update.append(self.extract_update_values(item))
+                        print(f'{self.get_item_name(item)} updated with id {item_id}.')
 
                     count += 1
                 except Exception as e:
-                    print(f"Error saving {self.get_item_name(item)}: {e}")
+                    print(f"Error processing {self.get_item_name(item)}: {e}")
+
+            # Batch operations
+            if items_to_insert:
+                cur.executemany(self.get_insert_query(), items_to_insert)
+            if items_to_update:
+                cur.executemany(self.get_update_query(), items_to_update)
 
             conn.commit()
         return count
